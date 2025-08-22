@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rishi 🤖 - Technical Coding Chatbot</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="chat-container">
+    <header>
+      <h1>🤖 Rishi – Technical Chatbot</h1>
+      <p>Helping you with coding queries</p>
+
+      <!-- Header Buttons -->
+      <div class="header-buttons">
+        <button class="toggle-btn" onclick="toggleMode()">🌙 Dark</button>
+      </div>
+    </header>
+
+    <!-- Chat messages -->
+    <div id="chat-box" class="chat-box"></div>
+
+    <!-- Input stays at the bottom -->
+    <div class="input-area">
+      <input
+        type="text"
+        id="user-input"
+        placeholder="Type your coding question..."
+        autofocus
+      />
+      <button onclick="sendMessage()">Send</button>
+      <button class="clear-btn" onclick="clearChat()">🧹 Clear Chat</button>
+    </div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chat-box");
+
+    function appendMessage(sender, message, sticker = "", isBot = false) {
+      const msgWrapper = document.createElement("div");
+      msgWrapper.className = isBot ? "message-row bot" : "message-row user";
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.innerText = isBot ? "🤖" : "🧑";
+
+      const messageBubble = document.createElement("div");
+      messageBubble.className = "bubble";
+      messageBubble.innerHTML = `<strong>${sender} ${sticker}:</strong><br>${message}`;
+
+      msgWrapper.appendChild(avatar);
+      msgWrapper.appendChild(messageBubble);
+      chatBox.appendChild(msgWrapper);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById("user-input");
+      const message = input.value.trim();
+      if (!message) return;
+
+      appendMessage("You", message, "", false);
+      input.value = "";
+
+      // Typing animation
+      const typingRow = document.createElement("div");
+      typingRow.className = "message-row bot typing";
+      typingRow.innerHTML =
+        '<div class="avatar">🤖</div><div class="bubble"><em>Rishi is typing<span class="dots"></span></em></div>';
+      chatBox.appendChild(typingRow);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+
+      chatBox.removeChild(typingRow);
+
+      const data = await response.json();
+      appendMessage("Rishi", data.reply, data.sticker, true);
+    }
+
+    // Clear chat function
+    function clearChat() {
+      chatBox.innerHTML = "";
+    }
+
+    document
+      .getElementById("user-input")
+      .addEventListener("keydown", function (e) {
+        if (e.key === "Enter") sendMessage();
+      });
+
+    // Toggle theme
+    function toggleMode() {
+      document.body.classList.toggle("dark");
+      const btn = document.querySelector(".toggle-btn");
+      if (document.body.classList.contains("dark")) {
+        btn.textContent = "☀️ Light";
+      } else {
+        btn.textContent = "🌙 Dark";
+      }
+    }
+  </script>
+</body>
+</html>
